@@ -1,0 +1,17 @@
+# Virtual Environment
+venv/
+.venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# OS artifacts
+.DS_Store
+
+# Temporary test images
+test_digit_*.png
+test_digit_*.jpg

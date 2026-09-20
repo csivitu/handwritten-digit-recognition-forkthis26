@@ -64,8 +64,9 @@ def preprocess_image(image_bytes: bytes) -> tuple[np.ndarray, str]:
     if mean_border > 128:
         img_arr = 255.0 - img_arr
 
-    # Noise reduction: zero out low values
-    threshold = 80.0
+    # Noise reduction: zero out values that are background noise rather than ink.
+    # Keep this low so light or thin strokes survive into the bounding box.
+    threshold = 30.0
     img_arr[img_arr < threshold] = 0.0
     img_arr[img_arr > 200.0] = 255.0
 

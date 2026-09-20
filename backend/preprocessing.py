@@ -65,19 +65,22 @@ def preprocess_image(image_bytes: bytes) -> tuple[np.ndarray, str]:
         img_arr = 255.0 - img_arr
 
     # Noise reduction: zero out low values
-    threshold = 80.0
+    threshold = 30.0
     img_arr[img_arr < threshold] = 0.0
     img_arr[img_arr > 200.0] = 255.0
 
     # 3. Validate non-empty image
     active_indices = np.argwhere(img_arr > threshold)
-    validation_pixels = np.argwhere(img_arr > 0)
-    if len(active_indices) < 15 or len(validation_pixels) > 500:
+
+    if len(active_indices) < 15:
         raise ValueError("Please draw a digit or upload an image first.")
 
     # 4. Crop tightly to digit bounding box
     y_min, x_min = active_indices.min(axis=0)
     y_max, x_max = active_indices.max(axis=0)
+
+    if (y_max - y_min) < 10 and (x_max - x_min) < 10:
+        raise ValueError("Drawing is too small to process. Please draw a clearer digit.")
 
     cropped = img_arr[y_min : y_max + 1, x_min : x_max + 1]
     crop_h, crop_w = cropped.shape
@@ -138,7 +141,7 @@ def preprocess_image(image_bytes: bytes) -> tuple[np.ndarray, str]:
             canvas = shifted
 
     # 7. Normalize pixel values (0–255 -> 0–1)
-    normalized = 1.0 - (canvas / 255.0)
+    normalized = canvas / 255.0
     tensor = normalized.reshape(1, 28, 28)
 
     # Generate 28x28 base64 preview for debug / frontend verification

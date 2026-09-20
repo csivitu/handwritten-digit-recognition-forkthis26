@@ -42,7 +42,7 @@ class ModelService:
         # Real model prediction
         raw_probs = self.model(input_tensor, training=True).numpy()[0]
         predicted_digit = int(np.argmax(raw_probs))
-        confidence = float(raw_probs[0])
+        confidence = float(raw_probs[predicted_digit])
         probabilities = [float(p) for p in raw_probs]
 
         return {

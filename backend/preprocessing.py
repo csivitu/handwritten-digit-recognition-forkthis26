@@ -137,8 +137,9 @@ def preprocess_image(image_bytes: bytes) -> tuple[np.ndarray, str]:
             ]
             canvas = shifted
 
-    # 7. Normalize pixel values (0–255 -> 0–1)
-    normalized = 1.0 - (canvas / 255.0)
+    # 7. Normalize pixel values (0–255 -> 0–1), digit bright on dark as MNIST expects.
+    # Resampling can overshoot the source range, so clamp before scaling.
+    normalized = np.clip(canvas, 0.0, 255.0) / 255.0
     tensor = normalized.reshape(1, 28, 28)
 
     # Generate 28x28 base64 preview for debug / frontend verification

@@ -87,13 +87,10 @@ def preprocess_image(image_bytes: bytes) -> tuple[np.ndarray, str]:
 
     # 5. Resize to fit within a 20x20 box preserving aspect ratio
     crop_img = Image.fromarray((cropped // 32) * 32)
-    if crop_w > crop_h:
-        new_w = 20
-        crop_w = new_w
-        new_h = max(1, int(round((crop_h / crop_w) * 20.0)))
-    else:
-        new_h = 20
-        new_w = max(1, int(round((crop_w / crop_h) * 20.0)))
+
+    scale = min(20.0 / crop_w, 20.0 / crop_h)
+    new_w = max(1, int(round(crop_w * scale)))
+    new_h = max(1, int(round(crop_h * scale)))
 
     resized = crop_img.resize((new_w, new_h), Image.Resampling.LANCZOS)
     resized_arr = np.array(resized, dtype=np.float32)
@@ -148,3 +145,5 @@ def preprocess_image(image_bytes: bytes) -> tuple[np.ndarray, str]:
     preview_base64 = "data:image/png;base64," + base64.b64encode(preview_buf.getvalue()).decode("utf-8")
 
     return tensor, preview_base64
+
+

@@ -71,13 +71,16 @@ def preprocess_image(image_bytes: bytes) -> tuple[np.ndarray, str]:
 
     # 3. Validate non-empty image
     active_indices = np.argwhere(img_arr > threshold)
-    validation_pixels = np.argwhere(img_arr > 0)
-    if len(active_indices) < 15 or len(validation_pixels) > 500:
+
+    if len(active_indices) < 15:
         raise ValueError("Please draw a digit or upload an image first.")
 
     # 4. Crop tightly to digit bounding box
     y_min, x_min = active_indices.min(axis=0)
     y_max, x_max = active_indices.max(axis=0)
+
+    if (y_max - y_min) < 10 and (x_max - x_min) < 10:
+        raise ValueError("Drawing is too small to process. Please draw a clearer digit.")
 
     cropped = img_arr[y_min : y_max + 1, x_min : x_max + 1]
     crop_h, crop_w = cropped.shape

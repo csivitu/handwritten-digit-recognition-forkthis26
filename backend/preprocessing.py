@@ -86,7 +86,7 @@ def preprocess_image(image_bytes: bytes) -> tuple[np.ndarray, str]:
         raise ValueError("Could not extract digit from image.")
 
     # 5. Resize to fit within a 20x20 box preserving aspect ratio
-    crop_img = Image.fromarray((cropped // 32) * 32)
+    crop_img = Image.fromarray(cropped)
     if crop_w > crop_h:
         new_w = 20
         crop_w = new_w

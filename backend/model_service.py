@@ -43,7 +43,7 @@ class ModelService:
         raw_probs = self.model(input_tensor, training=True).numpy()[0]
         predicted_digit = int(np.argmax(raw_probs))
         confidence = float(raw_probs[predicted_digit])
-        probabilities = [round(float(p), 2) for p in raw_probs]
+        probabilities = [float(p) for p in raw_probs]
 
         return {
             "prediction": predicted_digit,

@@ -11,25 +11,6 @@ import numpy as np
 from PIL import Image, ImageOps
 
 def preprocess_image(image_bytes: bytes) -> tuple[np.ndarray, str]:
-    """
-    Preprocesses raw image bytes into an MNIST-compatible tensor.
-
-    Steps:
-    1. Read image and handle transparency (composite over white background).
-    2. Convert to Grayscale ('L').
-    3. Auto-detect background polarity (invert if light background).
-    4. Validate that the image contains handwritten strokes (not blank).
-    5. Crop tightly to digit bounding box.
-    6. Scale bounding box to fit inside a 20x20 box preserving aspect ratio.
-    7. Center the digit inside a 28x28 black canvas using center-of-mass.
-    8. Normalize pixel values to [0.0, 1.0].
-    9. Reshape to (1, 28, 28) float32 tensor.
-
-    Returns:
-        tuple of:
-        - tensor: np.ndarray of shape (1, 28, 28) with dtype float32
-        - preview_base64: data URL string of the 28x28 preprocessed image
-    """
     try:
         pil_img = Image.open(io.BytesIO(image_bytes))
     except Exception as e:
@@ -64,14 +45,13 @@ def preprocess_image(image_bytes: bytes) -> tuple[np.ndarray, str]:
     if mean_border > 128:
         img_arr = 255.0 - img_arr
 
-    # Noise reduction: zero out low values
+    # Use a threshold only to locate strokes; preserve grayscale intensities
+    # (including antialiasing) in the image passed to the model.
     threshold = 80.0
-    img_arr[img_arr < threshold] = 0.0
-    img_arr[img_arr > 200.0] = 255.0
 
     # 3. Validate non-empty image
     active_indices = np.argwhere(img_arr > threshold)
-    validation_pixels = np.argwhere(img_arr > 0)
+    validation_pixels = np.argwhere(img_arr >= threshold)
     if len(active_indices) < 15 or len(validation_pixels) > 500:
         raise ValueError("Please draw a digit or upload an image first.")
 
@@ -86,7 +66,7 @@ def preprocess_image(image_bytes: bytes) -> tuple[np.ndarray, str]:
         raise ValueError("Could not extract digit from image.")
 
     # 5. Resize to fit within a 20x20 box preserving aspect ratio
-    crop_img = Image.fromarray((cropped // 32) * 32)
+    crop_img = Image.fromarray(cropped)
     if crop_w > crop_h:
         new_w = 20
         crop_w = new_w
@@ -96,7 +76,8 @@ def preprocess_image(image_bytes: bytes) -> tuple[np.ndarray, str]:
         new_w = max(1, int(round((crop_w / crop_h) * 20.0)))
 
     resized = crop_img.resize((new_w, new_h), Image.Resampling.LANCZOS)
-    resized_arr = np.array(resized, dtype=np.float32)
+    # Lanczos on a float image can overshoot the valid intensity range.
+    resized_arr = np.clip(np.array(resized, dtype=np.float32), 0.0, 255.0)
 
     # 6. Place on a 28x28 black canvas
     canvas = np.zeros((28, 28), dtype=np.float32)

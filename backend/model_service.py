@@ -26,23 +26,16 @@ class ModelService:
         print("MNIST model loaded successfully!")
 
     def predict(self, input_tensor: np.ndarray) -> dict:
-        """
-        Runs real inference on a preprocessed (1, 28, 28) image tensor.
-
-        Returns:
-            dict containing:
-            - prediction: int (0–9)
-            - digit: int (0–9)
-            - confidence: float (0.0–1.0)
-            - probabilities: list[float] (length 10, sum to 1.0)
-        """
         if self.model is None:
             raise RuntimeError("Model is not loaded.")
-
-        # Real model prediction
-        raw_probs = self.model(input_tensor, training=True).numpy()[0]
+        
+        # Ensure input tensor is a distinct, unshared copy to prevent state leakage
+        tensor_copy = np.copy(input_tensor)
+        
+        # Inference must not update training-time state between requests
+        raw_probs = self.model(tensor_copy, training=False).numpy()[0]
         predicted_digit = int(np.argmax(raw_probs))
-        confidence = float(raw_probs[0])
+        confidence = float(raw_probs[predicted_digit])
         probabilities = [round(float(p), 2) for p in raw_probs]
 
         return {

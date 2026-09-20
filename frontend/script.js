@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let hasDrawn = false;
     let undoStack = [];
     const maxUndoSteps = 25;
-    let uploadedImageElement = null;
+    let uploadedFile = null;
     let toastTimeout = null;
 
     // --- 1. Mode Tab Switching ---
@@ -219,17 +219,16 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // Picker and drop uploads share one current file for every prediction.
+        uploadedFile = file;
+        previewImg.src = '';
         const reader = new FileReader();
         reader.onload = (e) => {
+            // An older read must not replace a newer upload or restore a reset.
+            if (uploadedFile !== file) return;
             previewImg.src = e.target.result;
             dropzoneEmpty.classList.add('hidden');
             dropzonePreview.classList.remove('hidden');
-
-            const img = new Image();
-            img.onload = () => {
-                uploadedImageElement = img;
-            };
-            img.src = e.target.result;
         };
         reader.readAsDataURL(file);
     }
@@ -237,7 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function resetUpload() {
         fileInput.value = '';
         previewImg.src = '';
-        uploadedImageElement = null;
+        uploadedFile = null;
         dropzonePreview.classList.add('hidden');
         dropzoneEmpty.classList.remove('hidden');
     }
@@ -335,16 +334,6 @@ document.addEventListener('DOMContentLoaded', () => {
             blob = await new Promise((resolve) => inputSource.toBlob(resolve, 'image/png'));
         } else if (inputSource instanceof File || inputSource instanceof Blob) {
             blob = inputSource;
-        } else if (fileInput.files && fileInput.files[0]) {
-            blob = fileInput.files[0];
-        } else if (uploadedImageElement) {
-            // Draw image to an offscreen canvas to extract clean blob
-            const offCanvas = document.createElement('canvas');
-            offCanvas.width = uploadedImageElement.naturalWidth || uploadedImageElement.width || 300;
-            offCanvas.height = uploadedImageElement.naturalHeight || uploadedImageElement.height || 300;
-            const offCtx = offCanvas.getContext('2d');
-            offCtx.drawImage(uploadedImageElement, 0, 0);
-            blob = await new Promise((resolve) => offCanvas.toBlob(resolve, 'image/png'));
         }
 
         if (!blob) {
@@ -384,11 +373,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             inputSource = canvas;
         } else {
-            if (!uploadedImageElement && (!fileInput.files || fileInput.files.length === 0)) {
+            if (!uploadedFile) {
                 showToast('Please draw a digit or upload an image first.');
                 return;
             }
-            inputSource = (fileInput.files && fileInput.files[0]) || uploadedImageElement;
+            inputSource = uploadedFile;
         }
 
         // 1. Enter Loading State: disable button and show Analyzing...

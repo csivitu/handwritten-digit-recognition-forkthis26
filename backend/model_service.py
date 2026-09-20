@@ -39,8 +39,8 @@ class ModelService:
         if self.model is None:
             raise RuntimeError("Model is not loaded.")
 
-        # Real model prediction
-        raw_probs = self.model(input_tensor, training=True).numpy()[0]
+        # Real model prediction (use inference mode training=False for independent predictions)
+        raw_probs = self.model(input_tensor, training=False).numpy()[0]
         predicted_digit = int(np.argmax(raw_probs))
         confidence = float(raw_probs[0])
         probabilities = [round(float(p), 2) for p in raw_probs]
@@ -57,6 +57,7 @@ _model_service = None
 
 def get_model_service() -> ModelService:
     global _model_service
-    _model_service = ModelService()
+    if _model_service is None:
+        _model_service = ModelService()
     return _model_service
    

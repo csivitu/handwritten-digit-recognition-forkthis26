@@ -335,16 +335,6 @@ document.addEventListener('DOMContentLoaded', () => {
             blob = await new Promise((resolve) => inputSource.toBlob(resolve, 'image/png'));
         } else if (inputSource instanceof File || inputSource instanceof Blob) {
             blob = inputSource;
-        } else if (fileInput.files && fileInput.files[0]) {
-            blob = fileInput.files[0];
-        } else if (uploadedImageElement) {
-            // Draw image to an offscreen canvas to extract clean blob
-            const offCanvas = document.createElement('canvas');
-            offCanvas.width = uploadedImageElement.naturalWidth || uploadedImageElement.width || 300;
-            offCanvas.height = uploadedImageElement.naturalHeight || uploadedImageElement.height || 300;
-            const offCtx = offCanvas.getContext('2d');
-            offCtx.drawImage(uploadedImageElement, 0, 0);
-            blob = await new Promise((resolve) => offCanvas.toBlob(resolve, 'image/png'));
         }
 
         if (!blob) {

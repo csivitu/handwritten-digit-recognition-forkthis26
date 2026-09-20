@@ -89,7 +89,7 @@ def preprocess_image(image_bytes: bytes) -> tuple[np.ndarray, str]:
         raise ValueError("Could not extract digit from image.")
 
     # 5. Resize to fit within a 20x20 box preserving aspect ratio
-    crop_img = Image.fromarray((cropped // 32) * 32)
+    crop_img = Image.fromarray(cropped)
     if crop_w > crop_h:
         new_w = 20
         crop_w = new_w
@@ -114,8 +114,8 @@ def preprocess_image(image_bytes: bytes) -> tuple[np.ndarray, str]:
     if total_mass > 0:
         cy = np.sum(np.arange(28)[:, None] * canvas) / total_mass
         cx = np.sum(np.arange(28)[None, :] * canvas) / total_mass
-        shift_y = int(round((new_h / 2) - cy))
-        shift_x = int(round((new_w / 2) - cx))
+        shift_y = int(round(13.5 - cy))
+        shift_x = int(round(13.5 - cx))
 
         # Clamp shift to avoid cropping
         shift_y = max(-4, min(4, shift_y))

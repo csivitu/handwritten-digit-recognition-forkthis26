@@ -86,56 +86,40 @@ def preprocess_image(image_bytes: bytes) -> tuple[np.ndarray, str]:
         raise ValueError("Could not extract digit from image.")
 
     # 5. Resize to fit within a 20x20 box preserving aspect ratio
-    crop_img = Image.fromarray((cropped // 32) * 32)
-    if crop_w > crop_h:
-        new_w = 20
-        crop_w = new_w
-        new_h = max(1, int(round((crop_h / crop_w) * 20.0)))
-    else:
+    
+    if crop_h > crop_w:
         new_h = 20
-        new_w = max(1, int(round((crop_w / crop_h) * 20.0)))
+        new_w = max(1, int(round(20 * crop_w / crop_h)))
+    else:
+        new_w = 20
+        new_h = max(1, int(round(20 * crop_h / crop_w)))
 
-    resized = crop_img.resize((new_w, new_h), Image.Resampling.LANCZOS)
-    resized_arr = np.array(resized, dtype=np.float32)
+    # Ensure we use high-quality Lanczos resampling
+    crop_img = Image.fromarray(cropped).resize((new_w, new_h), Image.Resampling.LANCZOS)
+    scaled_arr = np.array(crop_img, dtype=np.float32) / 255.0
 
-    # 6. Place on a 28x28 black canvas
+    # 6. Center of mass positioning onto the 28x28 canvas
+    cy, cx = ndimage.center_of_mass(scaled_arr)
     canvas = np.zeros((28, 28), dtype=np.float32)
 
-    # Center placement
     start_y = (28 - new_h) // 2
     start_x = (28 - new_w) // 2
-    canvas[start_y : start_y + new_h, start_x : start_x + new_w] = resized_arr
 
-    # Fine-tune centering using center of mass (MNIST standard)
-    total_mass = np.sum(canvas)
-    if total_mass > 0:
-        cy = np.sum(np.arange(28)[:, None] * canvas) / total_mass
-        cx = np.sum(np.arange(28)[None, :] * canvas) / total_mass
-        shift_y = int(round((new_h / 2) - cy))
-        shift_x = int(round((new_w / 2) - cx))
+    shift_y = int(round(13.5 - cy))
+    shift_x = int(round(13.5 - cx))
 
-        # Clamp shift to avoid cropping
-        shift_y = max(-4, min(4, shift_y))
-        shift_x = max(-4, min(4, shift_x))
+    # Clamp shifts to prevent clipping outside the canvas margins
+    shift_y = max(-start_y, min(28 - (start_y + new_h), shift_y))
+    shift_x = max(-start_x, min(28 - (start_x + new_w), shift_x))
 
-        if shift_y != 0 or shift_x != 0:
-            shifted = np.zeros_like(canvas)
-            # Source bounds
-            src_y_start = max(0, -shift_y)
-            src_y_end = min(28, 28 - shift_y)
-            src_x_start = max(0, -shift_x)
-            src_x_end = min(28, 28 - shift_x)
+    final_y = start_y + shift_y
+    final_x = start_x + shift_x
 
-            # Dest bounds
-            dst_y_start = max(0, shift_y)
-            dst_y_end = min(28, 28 + shift_y)
-            dst_x_start = max(0, shift_x)
-            dst_x_end = min(28, 28 + shift_x)
+    canvas[final_y:final_y + new_h, final_x:final_x + new_w] = scaled_arr
 
-            shifted[dst_y_start:dst_y_end, dst_x_start:dst_x_end] = canvas[
-                src_y_start:src_y_end, src_x_start:src_x_end
-            ]
-            canvas = shifted
+       
+
+          
 
     # 7. Normalize pixel values (0–255 -> 0–1)
     normalized = 1.0 - (canvas / 255.0)

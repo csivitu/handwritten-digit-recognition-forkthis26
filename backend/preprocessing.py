@@ -138,7 +138,7 @@ def preprocess_image(image_bytes: bytes) -> tuple[np.ndarray, str]:
             canvas = shifted
 
     # 7. Normalize pixel values (0–255 -> 0–1)
-    normalized = 1.0 - (canvas / 255.0)
+    normalized = canvas / 255.0
     tensor = normalized.reshape(1, 28, 28)
 
     # Generate 28x28 base64 preview for debug / frontend verification

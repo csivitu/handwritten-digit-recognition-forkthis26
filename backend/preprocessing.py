@@ -111,8 +111,9 @@ def preprocess_image(image_bytes: bytes) -> tuple[np.ndarray, str]:
     if total_mass > 0:
         cy = np.sum(np.arange(28)[:, None] * canvas) / total_mass
         cx = np.sum(np.arange(28)[None, :] * canvas) / total_mass
-        shift_y = int(round((new_h / 2) - cy))
-        shift_x = int(round((new_w / 2) - cx))
+        # target is the centre of the 28x28 canvas, not the centre of the digit box
+        shift_y = int(round(14.0 - cy))
+        shift_x = int(round(14.0 - cx))
 
         # Clamp shift to avoid cropping
         shift_y = max(-4, min(4, shift_y))

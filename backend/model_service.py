@@ -40,18 +40,17 @@ class ModelService:
             raise RuntimeError("Model is not loaded.")
 
         # Real model prediction
-        raw_probs = self.model(input_tensor, training=True).numpy()[0]
+        raw_probs = self.model(input_tensor, training=False).numpy()[0]
         predicted_digit = int(np.argmax(raw_probs))
-        confidence = float(raw_probs[0])
-        probabilities = [round(float(p), 2) for p in raw_probs]
+        confidence = float(np.max(raw_probs))
+        probabilities = [float(p) for p in raw_probs]
 
         return {
             "prediction": predicted_digit,
             "digit": predicted_digit,
-            "confidence": round(confidence, 4),
+            "confidence": confidence,
             "probabilities": probabilities,
         }
-
 # Global singleton instance
 _model_service = None
 

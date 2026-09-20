@@ -70,9 +70,8 @@ def preprocess_image(image_bytes: bytes) -> tuple[np.ndarray, str]:
     img_arr[img_arr > 200.0] = 255.0
 
     # 3. Validate non-empty image
-    active_indices = np.argwhere(img_arr > threshold)
-    validation_pixels = np.argwhere(img_arr > 0)
-    if len(active_indices) < 15 or len(validation_pixels) > 500:
+    active_indices = np.argwhere(img_arr > 0)
+    if len(active_indices) < 15:
         raise ValueError("Please draw a digit or upload an image first.")
 
     # 4. Crop tightly to digit bounding box

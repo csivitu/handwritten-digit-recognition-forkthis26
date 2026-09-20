@@ -71,8 +71,8 @@ def preprocess_image(image_bytes: bytes) -> tuple[np.ndarray, str]:
 
     # 3. Validate non-empty image
     active_indices = np.argwhere(img_arr > threshold)
-    validation_pixels = np.argwhere(img_arr > 0)
-    if len(active_indices) < 15 or len(validation_pixels) > 500:
+
+    if len(active_indices) < 15:
         raise ValueError("Please draw a digit or upload an image first.")
 
     # 4. Crop tightly to digit bounding box
@@ -148,3 +148,5 @@ def preprocess_image(image_bytes: bytes) -> tuple[np.ndarray, str]:
     preview_base64 = "data:image/png;base64," + base64.b64encode(preview_buf.getvalue()).decode("utf-8")
 
     return tensor, preview_base64
+
+

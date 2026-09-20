@@ -65,7 +65,7 @@ def preprocess_image(image_bytes: bytes) -> tuple[np.ndarray, str]:
         img_arr = 255.0 - img_arr
 
     # Noise reduction: zero out low values
-    threshold = 80.0
+    threshold = np.mean(img_arr) + np.std(img_arr)
     img_arr[img_arr < threshold] = 0.0
     img_arr[img_arr > 200.0] = 255.0
 

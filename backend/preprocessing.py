@@ -10,6 +10,9 @@ import base64
 import numpy as np
 from PIL import Image, ImageOps
 
+# Fewest stroke pixels an image must carry to count as a digit rather than a stray mark.
+MIN_DIGIT_PIXELS = 15
+
 def preprocess_image(image_bytes: bytes) -> tuple[np.ndarray, str]:
     """
     Preprocesses raw image bytes into an MNIST-compatible tensor.
@@ -69,10 +72,9 @@ def preprocess_image(image_bytes: bytes) -> tuple[np.ndarray, str]:
     img_arr[img_arr < threshold] = 0.0
     img_arr[img_arr > 200.0] = 255.0
 
-    # 3. Validate non-empty image
+    # 3. Validate non-empty image, using the same threshold as the rest of the pipeline
     active_indices = np.argwhere(img_arr > threshold)
-    validation_pixels = np.argwhere(img_arr > 0)
-    if len(active_indices) < 15 or len(validation_pixels) > 500:
+    if len(active_indices) < MIN_DIGIT_PIXELS:
         raise ValueError("Please draw a digit or upload an image first.")
 
     # 4. Crop tightly to digit bounding box

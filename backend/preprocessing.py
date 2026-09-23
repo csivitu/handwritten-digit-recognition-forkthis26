@@ -92,7 +92,6 @@ def preprocess_image(image_bytes: bytes) -> tuple[np.ndarray, str]:
     crop_img = Image.fromarray((cropped // 32) * 32)
     if crop_w > crop_h:
         new_w = 20
-        crop_w = new_w
         new_h = max(1, int(round((crop_h / crop_w) * 20.0)))
     else:
         new_h = 20
